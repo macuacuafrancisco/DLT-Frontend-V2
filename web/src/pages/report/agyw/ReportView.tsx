@@ -29,7 +29,14 @@ import {
   getAgywPrevBeneficiariesReportGenerated,
   getFileDownloaded,
 } from "@app/utils/report";
+import {
+  loadTotalBeneficiariesIds,
+  resetTotalBeneficiariesIds,
+} from "@app/store/reducers/report";
+// import { useLocation } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
+const title = "Total de Beneficiárias no Indicador AGYW_PREV";
 const { Text } = Typography;
 
 const ages = [
@@ -37,6 +44,11 @@ const ages = [
 ];
 
 const ReportView: React.FC = () => {
+  // const location = useLocation();
+  // const { total, districtId } = location.state || {};
+  const [searchParams] = useSearchParams();
+  const total = searchParams.get("total");
+  const districtId = searchParams.get("districtId");
   const [form] = Form.useForm();
 
   const [users, setUsers] = useState<UserModel[]>([]);
@@ -52,7 +64,7 @@ const ReportView: React.FC = () => {
   const [currentPageEnd, setCurrentPageEnd] = useState(99);
   const pageSize = 100;
   const userSelector = useSelector((state: any) => state?.user);
-  const authSelector = useSelector((state: any) => state?.auth.currentUser);
+  // const authSelector = useSelector((state: any) => state?.auth.currentUser);
   const beneficiariesIdsSelector: [] = useSelector(
     (state: any) => state?.report.ids
   );
@@ -65,6 +77,7 @@ const ReportView: React.FC = () => {
   const userId = localStorage.getItem("user");
   const username = localStorage.getItem("username");
   const dispatch = useDispatch();
+  const responseData = useSelector((state: any) => state.report.agyw);
 
   const getUsernames = (userId) => {
     const currentNames = userSelector?.users?.map((item) => {
@@ -489,6 +502,99 @@ const ReportView: React.FC = () => {
       console.error("Error downloading file: ", error);
     }
   };
+
+  function extractElements(data) {
+    const elements: string[] = [];
+
+    data.forEach((item) => {
+      Object.values(item.value).forEach((value) => {
+        if (Array.isArray(value)) {
+          elements.push(...value);
+        }
+      });
+    });
+
+    return elements;
+  }
+
+  const loadCompletedOnlyPrimaryPackage = (total, districtId) => {
+    const beneficiaries =
+      responseData[districtId]["completed-only-primary-package"].beneficiaries;
+
+    const arrBeneficiaries = Object.keys(beneficiaries).map((key) => ({
+      key,
+      value: beneficiaries[key],
+    }));
+
+    const elements = extractElements(arrBeneficiaries);
+    dispatch(
+      loadTotalBeneficiariesIds({ ids: elements, title: title, total: total })
+    );
+  };
+
+  const loadCompletedPrimaryPackageAndSecondaryService = (
+    total,
+    districtId
+  ) => {
+    const beneficiaries =
+      responseData[districtId][
+        "completed-primary-package-and-secondary-service"
+      ].beneficiaries;
+
+    const arrBeneficiaries = Object.keys(beneficiaries).map((key) => ({
+      key,
+      value: beneficiaries[key],
+    }));
+
+    const elements = extractElements(arrBeneficiaries);
+    dispatch(
+      loadTotalBeneficiariesIds({ ids: elements, title: title, total: total })
+    );
+  };
+
+  const loadCompletedAtLeastOnePrimaryService = (total, districtId) => {
+    const beneficiaries =
+      responseData[districtId]["completed-service-not-primary-package"]
+        .beneficiaries;
+
+    const arrBeneficiaries = Object.keys(beneficiaries).map((key) => ({
+      key,
+      value: beneficiaries[key],
+    }));
+
+    const elements = extractElements(arrBeneficiaries);
+    dispatch(
+      loadTotalBeneficiariesIds({ ids: elements, title: title, total: total })
+    );
+  };
+
+  const loadStartedServiceDidNotComplete = (total, districtId) => {
+    const beneficiaries =
+      responseData[districtId]["started-service-did-not-complete"]
+        .beneficiaries;
+
+    const arrBeneficiaries = Object.keys(beneficiaries).map((key) => ({
+      key,
+      value: beneficiaries[key],
+    }));
+
+    const elements = extractElements(arrBeneficiaries);
+    dispatch(
+      loadTotalBeneficiariesIds({ ids: elements, title: title, total: total })
+    );
+  };
+
+  const handleOnCLick = (total, districtId) => {
+    dispatch(resetTotalBeneficiariesIds());
+    loadCompletedOnlyPrimaryPackage(total, districtId);
+    loadCompletedPrimaryPackageAndSecondaryService(total, districtId);
+    loadCompletedAtLeastOnePrimaryService(total, districtId);
+    loadStartedServiceDidNotComplete(total, districtId);
+  };
+
+  useEffect(() => {
+    handleOnCLick(total, districtId);
+  }, [total, districtId]);
 
   return (
     <>
