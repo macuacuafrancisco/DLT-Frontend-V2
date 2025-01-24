@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import {
   bulkCancelSelected,
-  // bulkCancelAll,
+  bulkCancelAll,
   BulkReferenceCancel,
   pagedQueryPendingByUser,
   queryCountByPendingFilters,
@@ -28,7 +28,7 @@ import {
   Select,
   Tag,
   DatePicker,
-  // Checkbox,
+  Checkbox,
 } from "antd";
 import ptPT from "antd/lib/locale-provider/pt_PT";
 import "antd/dist/antd.css";
@@ -116,18 +116,18 @@ const BulkReference: React.FC = ({ resetModal }: any) => {
   const rowSelection = {
     selectedRowKeys,
     onChange: onSelectChange,
-    // onSelectAll: (selected) => {
-    //   if (selected) {
-    //     // Select all rows across all pages
-    //     const allRowKeys = data.map((item) => item.key);
-    //     setSelectedRowKeys(allRowKeys);
-    //     setSelectAll(true);
-    //   } else {
-    //     // Deselect all rows
-    //     setSelectedRowKeys([]);
-    //     setSelectAll(false);
-    //   }
-    // },
+    onSelectAll: (selected) => {
+      if (selected) {
+        // Select all rows across all pages
+        const allRowKeys = data.map((item) => item.key);
+        setSelectedRowKeys(allRowKeys);
+        setSelectAll(true);
+      } else {
+        // Deselect all rows
+        setSelectedRowKeys([]);
+        setSelectAll(false);
+      }
+    },
   };
 
   const userSelector = useSelector((state: any) => state?.user);
@@ -291,7 +291,7 @@ const BulkReference: React.FC = ({ resetModal }: any) => {
         } else {
           if (selectAll) {
             const userId = Number(user);
-            // const { data } = await bulkCancelAll(payload, userId);
+            const { data } = await bulkCancelAll(payload, userId);
           } else {
             const { data } = await bulkCancelSelected(payload);
           }
@@ -837,7 +837,7 @@ const BulkReference: React.FC = ({ resetModal }: any) => {
         bordered={false}
         headStyle={{ color: "#17a2b8" }}
       >
-        {/* <Checkbox
+        <Checkbox
           checked={selectAll}
           onChange={(e) => {
             const checked = e.target.checked;
@@ -846,7 +846,7 @@ const BulkReference: React.FC = ({ resetModal }: any) => {
           }}
         >
           Cancelar todos pendentes ({allAcrossPagesCounter})
-        </Checkbox> */}
+        </Checkbox>
         <Row gutter={5}>
           {!selectAll && (
             <Col span={12}>
